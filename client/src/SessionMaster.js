@@ -40,6 +40,7 @@ class SessionMaster {
         this.isLoggedIn = new BehaviorSubject(false)
         this.message = new Subject(null)
         this.timeRemaining = new Subject(null)
+        this.refreshes = new Subject(0)
         this.onLoad()
     }
 
@@ -57,19 +58,29 @@ class SessionMaster {
                 }
             ).catch(err => {
                 console.log(err)
-                this.message.next(`${getTime()} : Server Side Error - Cannot Reach `)
             })
         }
     }
 
     startSession = (authData) => {
+        authData.refreshes = 0
         storeData(authData)
         this.isLoggedIn.next(true)
         this.setTimer()
     }
-
+    resfreshSession = (authData) => {
+        let refreshes = Number(localStorage.getItem('refreshes'))
+        authData.refreshes = refreshes + 1
+        wipeData()
+        storeData(authData)
+        this.refreshes.next(authData.refreshes)
+        this.isLoggedIn.next(true)
+        this.setTimer()
+        this.message.next(`${getTime()} : Session Refreshed`)
+    }
     resumeSession = () => {
         this.isLoggedIn.next(true)
+        this.refreshes.next(localStorage.getItem('refreshes'))
         this.setTimer()
     }
 
@@ -95,6 +106,7 @@ class SessionMaster {
         this.isLoggedIn.next(false)
         this.message.next(`${getTime()} : User Logged Out`)
         wipeData()
+        this.refreshes.next(0)
         this.message.next(`${getTime()} : Local Storage Wiped `)
     }
 
@@ -124,7 +136,7 @@ class SessionMaster {
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
         }).then(results => {
-
+            this.resfreshSession(results.data)
         }).catch(err => {
 
         })

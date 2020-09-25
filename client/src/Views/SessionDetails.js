@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import SessionMaster from '../SessionMaster'
 
-import { Button, Card, CardActionArea, CardActions, CardContent, CardHeader, Grid, Typography } from '@material-ui/core';
+import { Button, Card, CardActions, CardContent, CardHeader, Grid, Typography } from '@material-ui/core';
 
 
 import DetailsGrid from './DetailsGrid'
@@ -35,9 +35,9 @@ export default class SessionDetails extends Component {
             SessionMaster.timeRemaining.subscribe(time => {
                 if (time !== null) {
                     this.initTimer(time / 1000)
-                } else {
                 }
-            })
+            }),
+            SessionMaster.refreshes.subscribe(refreshes => { this.setState({ refreshes }) })
         ]
 
     }
@@ -45,6 +45,7 @@ export default class SessionDetails extends Component {
     padTwo = number => number <= 60 ? `0${number}`.slice(-2) : number;
 
     initTimer = (time) => {
+        this.setState({ time })
         this.setState({
             timer: (setInterval(() => {
                 this.setState({ time: --time })
@@ -60,6 +61,10 @@ export default class SessionDetails extends Component {
     }
     handleLogout = () => {
         SessionMaster.logout()
+        this.endTimer()
+    }
+    handleRefresh = () => {
+        SessionMaster.refresh()
         this.endTimer()
     }
 
@@ -85,7 +90,7 @@ export default class SessionDetails extends Component {
                             } />
                         </CardContent>
                         <CardActions>
-                            <Button disabled={!this.state.auth}>Refresh</Button>
+                            <Button disabled={!this.state.auth} onClick={() => this.handleRefresh()}>Refresh</Button>
                             <Button disabled={!this.state.auth} onClick={() => this.handleLogout()}>Logout</Button>
                         </CardActions>
                     </Card>

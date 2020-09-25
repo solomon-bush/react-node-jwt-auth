@@ -10,7 +10,7 @@ app.use(bodyParser.json())
 
 const JWT_CONFIG = {
     pvt_key: 'notSecure?',
-    duration: 1,
+    duration: 5,
     keyid: 'user'
 }
 
@@ -68,8 +68,17 @@ app.all('/api/login', (req, res) => {
     }
 })
 
+//if JWTInterceptor does not reject, the Token is Valid
 app.all('/api/validate', JWTInterceptor, (req, res) => {
     res.send(true)
+})
+
+app.all('/api/refresh', JWTInterceptor, (req, res) => {
+    res.send({
+        user: User.details,
+        token: JWTEncode({ username: (User.creds.username), role: (User.details.role) }),
+        exp: JWT_CONFIG.duration
+    })
 })
 
 
