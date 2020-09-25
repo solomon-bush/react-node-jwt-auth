@@ -21,10 +21,20 @@ export default class LoginPage extends Component {
     }
     componentDidMount = () => {
         this.subs = [SessionMaster.isLoggedIn.subscribe(auth => {
-            if (auth === true) {
-                this.setState({ auth: true })
+            if (auth !== null) {
+                this.setState({ auth })
+                if (auth === false) {
+                    this.resetForm()
+                }
             }
         })]
+    }
+
+    resetForm = () => {
+        this.setState({
+            username: '',
+            password: ''
+        })
     }
 
     handleChange = (e) => {

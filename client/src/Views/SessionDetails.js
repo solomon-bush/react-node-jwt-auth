@@ -12,7 +12,8 @@ export default class SessionDetails extends Component {
 
         this.state = {
             auth: false,
-            timer: 0,
+            timer: null,
+            time: null,
             refreshes: 0,
             messages: []
         }
@@ -21,8 +22,8 @@ export default class SessionDetails extends Component {
     componentDidMount = () => {
         this.subs = [
             SessionMaster.isLoggedIn.subscribe(auth => {
-                if (auth === true) {
-                    this.setState({ auth: true })
+                if (auth !== null) {
+                    this.setState({ auth })
                 }
             }),
             SessionMaster.message.subscribe(message => {
@@ -30,10 +31,38 @@ export default class SessionDetails extends Component {
                 let messages = this.state.messages
                 messages.push(message)
                 this.setState({ messages })
+            }),
+            SessionMaster.timeRemaining.subscribe(time => {
+                if (time !== null) {
+                    this.initTimer(time / 1000)
+                } else {
+                }
             })
         ]
 
     }
+
+    padTwo = number => number <= 60 ? `0${number}`.slice(-2) : number;
+
+    initTimer = (time) => {
+        this.setState({
+            timer: (setInterval(() => {
+                this.setState({ time: --time })
+            }, 1000))
+        })
+        setTimeout(() => {
+            this.endTimer()
+        }, time * 1000)
+    }
+    endTimer = () => {
+        this.setState({ timer: null, time: null })
+        clearInterval(this.state.timer)
+    }
+    handleLogout = () => {
+        SessionMaster.logout()
+        this.endTimer()
+    }
+
 
     render() {
         return (
@@ -50,14 +79,14 @@ export default class SessionDetails extends Component {
                             <DetailsGrid items={
                                 [
                                     { key: 'Status', val: this.state.auth ? 'Logged In' : 'Not Logged In' },
-                                    { key: 'Time Remaining', val: this.state.timer },
+                                    { key: 'Time Remaining', val: `${Math.floor(this.state.time / 60)} : ${this.padTwo(this.state.time % 60)}` },
                                     { key: 'Refreshes', val: this.state.refreshes }
                                 ]
                             } />
                         </CardContent>
                         <CardActions>
                             <Button disabled={!this.state.auth}>Refresh</Button>
-                            <Button disabled={!this.state.auth}>Logout</Button>
+                            <Button disabled={!this.state.auth} onClick={() => this.handleLogout()}>Logout</Button>
                         </CardActions>
                     </Card>
                 </Grid>

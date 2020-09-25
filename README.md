@@ -1,6 +1,6 @@
 # To Do List
-- [ ] Handle Storage
-- [ ] Add Timer
-- [ ] Handle Timeout
+- [X] Handle Storage
+- [X] Add Timer
+- [X] Handle Timeout
 - [ ] Handle Logout
 - [ ] Hanlde Refresh

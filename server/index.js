@@ -10,7 +10,7 @@ app.use(bodyParser.json())
 
 const JWT_CONFIG = {
     pvt_key: 'notSecure?',
-    duration: 15,
+    duration: 1,
     keyid: 'user'
 }
 
@@ -29,15 +29,35 @@ const User = {
 }
 
 const JWTEncode = (payload) => {
-    return jwt.sign({ ...payload }, JWT_CONFIG.pvt_key, { expiresIn: JWT_CONFIG.duration * 60, keyid: JWT_CONFIG.keyid })
+    return jwt.sign({ payload }, JWT_CONFIG.pvt_key, { expiresIn: JWT_CONFIG.duration * 60, keyid: JWT_CONFIG.keyid })
 }
+
+const JWTInterceptor = (req, res, next) => {
+    if (req.headers['authorization']) {
+        let bearerToken = (req.headers['authorization']).split(' ')[1]
+
+        jwt.verify(bearerToken, JWT_CONFIG.pvt_key, (err, decoded) => {
+            if (err) {
+                res.status(401).send(err)
+            } else {
+                req.jwtPayload = decoded.payload
+                next()
+            }
+        })
+    } else {
+        res.status(403).send('No Bearer Token')
+    }
+}
+
 
 app.all('/api/login', (req, res) => {
     if (req.body.username && req.body.password) {
         if (req.body.username === User.creds.username && req.body.password === User.creds.password) {
             res.send({
                 user: User.details,
-                token: JWTEncode((User.creds.username, User.details.role))
+                token: JWTEncode({ username: (User.creds.username), role: (User.details.role) }),
+                exp: JWT_CONFIG.duration
+
             })
         }
         else {
@@ -46,6 +66,10 @@ app.all('/api/login', (req, res) => {
     } else {
         res.status(401).send('Invalid Request')
     }
+})
+
+app.all('/api/validate', JWTInterceptor, (req, res) => {
+    res.send(true)
 })
 
 
